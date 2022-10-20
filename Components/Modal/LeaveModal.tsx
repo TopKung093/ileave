@@ -1,41 +1,57 @@
 import React, { useEffect, useState } from 'react'
 import { Modal, Row, Col, Form, Input, Select, Button, Divider, message, Upload, DatePicker, Typography } from 'antd'
-import { LoadingOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
-import type { UploadChangeParam } from 'antd/es/upload';
-import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import styled from 'styled-components'
-import Layout from 'antd/lib/layout/layout';
-const { Title } = Typography;
+import { Types } from 'mongoose';
 
-const { RangePicker } = DatePicker;
-const GroupModal = (
-
-    modal: any, setModal: any) => {
+interface IFormValue {
+    detail: string
+    dragDate: Date
+    uptoDate: Date
+    number: Number
+    status: string
+    ltype_id: string
+    user_id:Types.ObjectId
+    id?:string
+}
+export async function getServerSideProps(context: any) {
+    if (context.req?.cookies?.user) {
+        const getCookie = JSON.parse(context.req?.cookies?.user)
+        return {
+            props: {
+                userCookie: getCookie
+            }
+        }
+    } else {
+        return {
+            redirect: {
+                destination: "/login",
+                parmanent: false
+            }
+        }
+    }
+}
+const LeaveModal = (modal: any, setModal: any, onAddLeave: any, leavetype: any, userCookie: any) => {
     const { Option } = Select;
     const [form] = Form.useForm();
-    const onFinish = (values: any) => {
-        console.log('Success:', values);
+    const onFinish = (values: IFormValue) => {
+        form.resetFields()
+        onAddLeave(values)
+        setModal({ value: values, visible: false })
+    }
+    const onFinishFailed = (errorInfo: any) => {
+        console.log('Failed:', errorInfo);
     };
     useEffect(() => {
+        (modal?.status === "create")
         form.setFieldsValue({
-            groupname: modal?.value?.group, //form.item > name="name"
-            status: 1, //form.item > name="status"
+            status: "รออนุมัติ",
+            user_id:userCookie.id
         })
     }, [modal, setModal])
-
-    const props: UploadProps = {
-        action: '//jsonplaceholder.typicode.com/posts/',
-        listType: 'picture',
-        previewFile(file) {
-            console.log('Your upload file:', file);
-            // Your process logic. Here we just mock to the same file
-            return fetch('https://next.json-generator.com/api/json/get/4ytyBoLK8', {
-                method: 'POST',
-                body: file,
-            })
-                .then(res => res.json())
-                .then(({ thumbnail }) => thumbnail);
-        }
+    const [oCLeaveType, setoCLeaveType] = useState(leavetype?.ltype_id)
+    const onChangeLeaveType: any = (value: string) => {
+        console.log(`selected ${value}`)
+        setoCLeaveType(value)
     }
     return (
         <>
@@ -49,62 +65,84 @@ const GroupModal = (
                 <Col span={20} offset={0}
                     style={{ fontSize: '35px', fontWeight: 'bold' }}>{modal?.header}</Col>
                 <Col span={24}><DividerStyled /></Col>
-                <Formstyle
-                    name="basic"
+                <Form name="basic"
                     layout='vertical'
                     form={form}
-                    onFinish={onFinish}>
-                    <Row>
-                        <Col span={8} offset={2}>
-                            <Form.Item label="ประเภทการลา">
-                                <SelectStyled style={{}} showSearch size='large' optionFilterProp="children">
-                                    <Option value="Laeve">ลากิจ</Option>
-                                    <Option value="Sick-Leave">ลาป่วย</Option>
-                                    <Option value="Leave-Other">อื่น ๆ</Option>
-                                </SelectStyled>
-                            </Form.Item></Col>
-                        <Col span={8} offset={3}>
-                            <Form.Item label="จำนวนวันลา">
-                                <InputStyled />
-                            </Form.Item>
-                        </Col>
-                        <Col span={8} offset={2}>
-                            <Form.Item label="ลาจากวันที่">
-                                <DatePickerStyled />
-                            </Form.Item>
-                        </Col>
-                        <Col span={8} offset={3}>
-                            <Form.Item label="ถึงวันที่">
-                                <DatePickerStyled />
-                            </Form.Item>
-                        </Col>
-                        <Col span={20} offset={2}>
-                            <Form.Item label="สาเหตุการลา">
-                                <Input.TextArea name="detailInput" autoSize={{ minRows: 4, maxRows: 6 }}
-                                    style={{ borderRadius: "20px", width: '100%', height: '50px', fontSize: '16px', background: '#FFF', borderColor: '#BFBFBF', marginTop: '-10px', boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.1)' }} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={6} offset={2}>
-                            <Form.Item label="แนบหลักฐาน">
-                                <Upload
-                                    {...props}>
-                                    <ButtonStyledd icon={<UploadOutlined />}>เลือกไฟล์</ButtonStyledd>
-                                </Upload>
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                    onFinish={onFinish}
+                    onFinishFailed={onFinishFailed}>
+                    {modal?.status === "create" ?
+                        <>
+                            <Row>
+                                <Col span={8} offset={2}>
+                                    <Form.Item label="ประเภทการลา" name="ltype_id">
+                                        <SelectStyled
+                                            showSearch
+                                            size="large"
+                                            placeholder=""
+                                            onChange={onChangeLeaveType}
+                                            optionFilterProp="children"
+                                            disabled={modal?.status === "detail" && true}
+                                            filterOption={(input, option) =>
+                                                (option!.children as unknown as string)
+                                                    .toLowerCase()
+                                                    .includes(input.toLowerCase())
+                                            }
+                                        >
+                                            {leavetype !== undefined &&
+                                                leavetype?.map((value: any, index: number) => (
+                                                    <Option key={index} value={value?.ltype_id}>
+                                                        {value?.ltype_name}
+                                                    </Option>
+                                                ))}
+                                        </SelectStyled>
+                                    </Form.Item></Col>
+                                <Col span={8} offset={3}>
+                                    <Form.Item label="สถานะ" name="status" hidden={true}>
+                                        <InputStyled disabled />
+                                    </Form.Item>
+                                    <Form.Item label="user_id" name="user_id" hidden={true}>
+                                        <InputStyled disabled />
+                                    </Form.Item>
+                                    <Form.Item label="จำนวนวันลา" name="number">
+                                        <InputStyled />
+                                    </Form.Item>
+                                </Col>
+
+                                <Col span={8} offset={2}>
+                                    <Form.Item label="ลาจากวันที่" name="dragDate">
+                                        <DatePickerStyled />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8} offset={3}>
+                                    <Form.Item label="ถึงวันที่" name="uptoDate">
+                                        <DatePickerStyled />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={20} offset={2}>
+                                    <Form.Item label="สาเหตุการลา" name="detail">
+                                        <Input.TextArea name="detailInput" autoSize={{ minRows: 4, maxRows: 6 }}
+                                            style={{ borderRadius: "20px", width: '100%', height: '50px', fontSize: '16px', background: '#FFF', borderColor: '#BFBFBF', marginTop: '-10px', boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.1)' }} />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </>
+                        : null
+                    }
                     <Row justify="center">
                         <Col span={4} offset={12}>
-                            <ButtonStyledd onClick={() => setModal({ visible: false })}
+                            <ButtonStyledd onClick={() => {
+                                form.resetFields()
+                                setModal({ visible: false })
+                            }}
                                 style={{ background: '#F1BE44', fontSize: '22px' }}>ยกเลิก</ButtonStyledd>
                         </Col>
                         <Col span={4} offset={1}>
-                            <ButtonStyledd onClick={() => setModal({ visible: false })}
+                            <ButtonStyledd htmlType="submit"
                                 style={{ background: '#F1BE44', fontSize: '22px' }}>ยืนยัน</ButtonStyledd>
                         </Col>
                     </Row>
 
-                </Formstyle>
+                </Form>
 
             </ModalStyled>
         </>
@@ -194,4 +232,4 @@ const UploadStyled = styled(Upload)`
     transition: border-color 0.3s;
 }
 `
-export default GroupModal
+export default LeaveModal

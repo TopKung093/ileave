@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import NavbarHead from '../Components/Layout/Navbar_Admin'
-import AddUserModal from '../Components/Modal/Add_User_Modal'
+import AddUserModal from '../Components/Modal/AddUser_Modal'
 import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch, Input } from 'antd';
 import { SearchOutlined, UserAddOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
@@ -99,7 +99,7 @@ const App: React.FC = () => {
       <Row justify='center' style={{ width: "100%", marginTop: "10px" }}>
         <TableStyled style={{ width: "70%" }} dataSource={dataSource} columns={columns} />
       </Row>
-      {AddUserModal(modal, setModal)}
+      {/* {AddUserModal(modal, setModal)} */}
     </>
   );
 };

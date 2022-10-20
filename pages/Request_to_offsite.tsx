@@ -7,7 +7,7 @@ import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch } from 'antd
 import { SearchOutlined, DiffOutlined, FormOutlined, DeleteFilled, PrinterOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
 const { RangePicker } = DatePicker;
-const App: React.FC = () => {
+const App: React.FC = (user):any => {
     const [modal, setModal] = useState({})
     const [modalprintreqesttooffsite, setModalprintreqesttooffsite] = useState({})
     const [status, setStatus] = useState()
@@ -70,7 +70,7 @@ const App: React.FC = () => {
             dataIndex: 'status',
             key: 'status',
             align: 'center',
-           
+
         },
         {
             title: 'หลักฐาน',
@@ -88,7 +88,7 @@ const App: React.FC = () => {
                 <Row justify='center' gutter={0} style={{ width: "100%" }}>
                     <Col span={2} offset={0} style={{ marginRight: "40px", }}>
                         <Button
-                            onClick={() => setModal({header: "แก้ไขการขอออกนอกสถานที่", status: "RTO", visible: true}
+                            onClick={() => setModal({ header: "แก้ไขการขอออกนอกสถานที่", status: "RTO", visible: true }
                             )}
                             style={{ background: 'none', border: 'none' }} >
                             <FormOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
@@ -96,7 +96,7 @@ const App: React.FC = () => {
                     </Col>
                     <Col span={1} offset={0} style={{ marginRight: "40px" }}>
                         <Button
-                            onClick={() => setModalprintreqesttooffsite({visible: true, header: "เอกสารปฏิบัติงานนอกสถานที่",status: "Request-to-offsite"})}
+                            onClick={() => setModalprintreqesttooffsite({ visible: true, header: "เอกสารปฏิบัติงานนอกสถานที่", status: "Request-to-offsite" })}
                             style={{ background: 'none', border: 'none' }} >
                             <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
                         </Button>
@@ -105,36 +105,35 @@ const App: React.FC = () => {
             ),
         },
     ];
-        return (
-            <>
-                <NavbarHead />
-                <Row>
-                    <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>ขออนุญาตออกนอกสถานที่</p></Col>
-                </Row>
-                <Row justify="center">
-                    <Col span={22}><DividerStyled /></Col>
-                </Row>
-                <Row justify="center">
-                    <Col span={11} >
-                        <Form.Item><DatePickerStyled /><ArrowRightOutlinedStyled /><DatePickerStyled /></Form.Item></Col>
-                    <Col span={3} offset={1}><ButtonStyledd icon={<SearchOutlined />} style={{ background: '#F1BE44', width: '150px' }}>Search</ButtonStyledd></Col>
-                </Row>
-                <Row>
-                <ColText span={5} offset={2} style={{marginTop:'70px',fontSize:'24px'}}> The remaining number of day.</ColText>
-                <ColText span={1} offset={0} style={{border:'2px solid #FFCA18',textAlign:'center',borderRadius:'10px',backgroundColor:'#FFCA18',marginTop:'70px'}}> 7</ColText>
-                    <Col span={3} offset={10}>
-                        <ButtonStyledd onClick={() => setModal({ status: "RTO", visible: true , header: "เพิ่มการขอออกนอกสถานที่"})}
-                        icon={<DiffOutlined />} style={{ background: '#F1BE44', width: '65%', marginTop: '60px' }}>Add offsite</ButtonStyledd></Col>
-                </Row>
-                <Row justify='center' style={{ width: "100%", marginTop: "80px" }}>
-                    <TableStyled style={{ width: "70%" }} dataSource={dataSource} columns={columns} />
-                    
-                </Row>
-                {RequestToOffsiteModal(modal, setModal)}
-                {PrintRequestToOffsite(modalprintreqesttooffsite, setModalprintreqesttooffsite)}
-            </>
-        );
-    };
+    
+    return (
+        <>
+            <Row>
+                <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>ขออนุญาตออกนอกสถานที่</p></Col>
+            </Row>
+            <Row justify="center">
+                <Col span={22}><DividerStyled /></Col>
+            </Row>
+            <Row justify="center">
+                <Col span={11} >
+                    <Form.Item><DatePickerStyled /><ArrowRightOutlinedStyled /><DatePickerStyled /></Form.Item></Col>
+                <Col span={3} offset={1}><ButtonStyledd icon={<SearchOutlined />} style={{ background: '#F1BE44', width: '150px' }}>Search</ButtonStyledd></Col>
+            </Row>
+            <Row>
+                
+                <Col span={3} offset={18}>
+                    <ButtonStyledd onClick={() => setModal({ status: "RTO", visible: true, header: "เพิ่มการขอออกนอกสถานที่" })}
+                        icon={<DiffOutlined />} style={{ background: '#F1BE44', width: '65%', marginTop: '20px' }}>Add offsite</ButtonStyledd></Col>
+            </Row>
+            <Row justify='center' style={{ width: "100%", marginTop: "50px" }}>
+                <TableStyled pagination={false} style={{ width: "70%",marginBottom:'100px' }} dataSource={dataSource} columns={columns} />
+
+            </Row>
+            {RequestToOffsiteModal(modal, setModal)}
+            {PrintRequestToOffsite(modalprintreqesttooffsite, setModalprintreqesttooffsite)}
+        </>
+    );
+};
 
 const ColText = styled(Col)`
     font-size: 20px;

@@ -1,14 +1,15 @@
-import React,{ useState} from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import NavbarHead from '../Components/Layout/Navbar'
-import WorkFromHomeModal from '../Components/Modal/Work_From_Home_Modal'
+import WorkFromHomeModal from '../Components/Modal/Sick_Leave_Modal'
 import PrintLeave from '../Components/Modal/Print_Leave'
 import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch } from 'antd';
 import { SearchOutlined, DiffOutlined, FormOutlined, DeleteFilled, PrinterOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import Navbar from '../Components/Layout/Navbar';
 
 const { RangePicker } = DatePicker;
 
-const App: React.FC = () => {
+const App: React.FC = (user):any => {
     const [modal, setModal] = useState({})
     const [modalprint, setModalprint] = useState({})
     const [status, setStatus] = useState()
@@ -19,18 +20,18 @@ const App: React.FC = () => {
 
     const dataSource = [
         {
-            No: '1',
-            Start_Data: '06/06/6666',
-            Detail: '9VS8',
+            No: '',
+            Start_Data: '',
+            Detail: '',
             SaveWork: '',
-            status: 'ไม่อนุมัติ'
+            status: ''
         },
         {
-            No: '2',
-            Start_Data: '00/00/0000',
-            Detail: 'PumiPol Sniper',
+            No: '',
+            Start_Data: '',
+            Detail: '',
             SaveWork: '',
-            status: 'อนุมัติ',
+            status: '',
         }
 
     ];
@@ -40,14 +41,14 @@ const App: React.FC = () => {
             dataIndex: 'No',
             key: 'No',
             align: 'center',
-            width:'5%'
+            width: '5%'
         },
         {
             title: 'เริ่มปฏิบัติงานวันที่',
             dataIndex: 'Start_Data',
             key: 'Start_Data',
             align: 'center',
-            width: '5%',
+           
         },
         {
             title: 'รายละเอียด',
@@ -77,20 +78,19 @@ const App: React.FC = () => {
             width: '10%',
             render: (_: any, record: any) => (
                 <Row justify='center' gutter={0} style={{ width: "100%" }}>
-                <Col span={4} offset={2} style={{marginRight:"40px",}}>
-                    <Button 
-                    onClick={() => setModalprint({visible: true, header: "ใบลากิจ",status: "Leave"})}
-                    style={{background: 'none',border:'none' }} >
-                        <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
-                    </Button>
-                </Col>
-            </Row>
+                    <Col span={4} offset={2} style={{ marginRight: "40px", }}>
+                        <Button
+                            onClick={() => setModalprint({ visible: true, header: "ใบลากิจ", status: "Leave" })}
+                            style={{ background: 'none', border: 'none' }} >
+                            <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
+                        </Button>
+                    </Col>
+                </Row>
             ),
         },
     ];
     return (
         <>
-            <NavbarHead />
             <Row>
                 <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>Work Form Home</p></Col>
             </Row>
@@ -104,14 +104,14 @@ const App: React.FC = () => {
             </Row>
             <Row>
                 <Col span={15} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '30px' }}>Work At Home History</p></Col>
-                <Col span={3} offset={2}><ButtonStyledd onClick={() => setModal({ visible: true, header: "เพิ่มงานประจำวัน",status: "WFH"})}
+                <Col span={3} offset={2}><ButtonStyledd onClick={() => setModal({ visible: true, header: "เพิ่มงานประจำวัน", status: "WFH" })}
                     icon={<DiffOutlined />} style={{ background: '#F1BE44', width: '85%', marginTop: '60px' }}>Add Work at Home</ButtonStyledd></Col>
             </Row>
             <Row justify="center">
                 <Col span={22}><DividerStyledd /></Col>
             </Row>
             <Row justify='center' style={{ width: "100%", marginTop: "10px" }}>
-                <TableStyled style={{ width: "70%" }} dataSource={dataSource} columns={columns} />
+                <TableStyled pagination={false} style={{ width: "70%" ,marginBottom:'100px'}} dataSource={dataSource} columns={columns} />
             </Row>
             {WorkFromHomeModal(modal, setModal)}
             {PrintLeave(modalprint, setModalprint)}

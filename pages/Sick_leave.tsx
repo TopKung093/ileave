@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import NavbarHead from '../Components/Layout/Navbar'
-import SickLeaveModal from '../Components/Modal/Leave_Modal'
+import SickLeaveModal from '../Components/Modal/AddUser_Modal'
 import PrintSickLeave from '../Components/Modal/Print_Leave'
 import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch } from 'antd';
 import { SearchOutlined, DiffOutlined, FormOutlined, DeleteFilled, PrinterOutlined, ArrowRightOutlined } from '@ant-design/icons';
@@ -17,23 +17,6 @@ const App: React.FC = () => {
         // setStatus(checked)
     };
 
-    const dataSource = [
-        {
-            No: '1',
-            Start_Data: '06/06/6666',
-            End_Data: '99/99/9999',
-            Detail: '9VS8',
-            status: false
-        },
-        {
-            No: '2',
-            Start_Data: '00/00/0000',
-            End_Data: '99/99/9999',
-            Detail: 'PumiPol Sniper',
-            status: false
-        }
-
-    ];
     const columns: any = [
         {
             title: 'ลำดับ',
@@ -96,8 +79,6 @@ const App: React.FC = () => {
     ];
     return (
         <>
-            <NavbarHead />
-
             <Row>
                 <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>Sick Leave</p></Col>
             </Row>
@@ -118,9 +99,9 @@ const App: React.FC = () => {
                 <Col span={22}><DividerStyledd /></Col>
             </Row>
             <Row justify='center' style={{ width: "100%", marginTop: "10px" }}>
-                <TableStyled style={{ width: "70%" }} dataSource={dataSource} columns={columns} />
+                <TableStyled style={{ width: "70%" }} columns={columns} />
             </Row>
-            {SickLeaveModal(modal, setModal)}
+            {/* {SickLeaveModal(modal, setModal)} */}
             {PrintSickLeave(modalprintsickleave, setModalprintsickleave)}
         </>
     );

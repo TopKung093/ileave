@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import styled from 'styled-components';
-import NavbarHead from '../Components/Layout/Navbar_Admin'
-import AddUserModal from '../Components/Modal/Add_User_Modal'
 import { Column } from '@ant-design/plots';
 import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch, Input } from 'antd';
 import { SearchOutlined, UserAddOutlined, ArrowRightOutlined } from '@ant-design/icons';
@@ -269,20 +266,10 @@ const App: React.FC = () => {
   
   const dataSource = [
     {
-      No: '1',
-      Employee_ID: '123456',
-      Firsh_Name: 'ภูมิพล',
-      Last_Name: 'ลากหัวคมคม',
-      Role: 'มือสไนเปอ',
-      Position: '9'
+     
     },
     {
-      No: '2',
-      Employee_ID: '789456',
-      Firsh_Name: 'โอโอริโอ้',
-      Last_Name: 'ข้าวกล่อง',
-      Role: 'นักเยด',
-      Position: '10'
+      
 
     }
 
@@ -332,7 +319,6 @@ const App: React.FC = () => {
 
   return (
     <>
-      <NavbarHead />
       <Row>
         <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>รายงานผลรวม</p></Col>
       </Row>
@@ -355,9 +341,8 @@ const App: React.FC = () => {
         <Col span={3} offset={1}><ButtonStyledd icon={<SearchOutlined />} style={{marginTop:'50px', background: '#F1BE44', width: '150px' }}>ค้นหา</ButtonStyledd></Col>
       </Row>
       <Row justify='center' style={{ width: "100%", marginTop: "10px" }}>
-        <TableStyled style={{ width: "70%" }} dataSource={dataSource} columns={columns} />
+        <TableStyled pagination={false} style={{ width: "70%",marginBottom:'100px' }} dataSource={dataSource} columns={columns} />
       </Row>
-      {AddUserModal(modal, setModal)}
     </>
   );
 };

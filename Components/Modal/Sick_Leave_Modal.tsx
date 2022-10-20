@@ -1,66 +1,59 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Row, Col, Form, Input, Select, Button, Divider, message, Upload, DatePicker } from 'antd'
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { Modal, Row, Col, Form, Input, Select, Button, Divider, message, Upload, DatePicker, Space } from 'antd'
+import { LoadingOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import styled from 'styled-components'
+import type { FormInstance } from 'antd/es/form';
 
-const getBase64 = (img: RcFile, callback: (url: string) => void) => {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => callback(reader.result as string));
-    reader.readAsDataURL(img);
-};
-
-const beforeUpload = (file: RcFile) => {
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-    if (!isJpgOrPng) {
-        message.error('You can only upload JPG/PNG file!');
-    }
-    const isLt5M = file.size / 4096 / 4096 < 5;
-    if (!isLt5M) {
-        message.error('Image must smaller than 5MB!');
-    }
-    return isJpgOrPng && isLt5M;
-};
+// const layout = {
+//     labelCol: { span: 8 },
+//     wrapperCol: { span: 16 },
+// };
+// const tailLayout = {
+//     wrapperCol: { offset: 8, span: 16 },
+// };
 const { RangePicker } = DatePicker;
 const GroupModal = (
     modal: any,
     setModal: any) => {
     const [loading, setLoading] = useState(false);
     const [imageUrl, setImageUrl] = useState<string>();
-    const handleChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
-        if (info.file.status === 'uploading') {
-            setLoading(true);
-            return;
-        }
-        if (info.file.status === 'done') {
-            // Get this url from response in real world.
-            getBase64(info.file.originFileObj as RcFile, url => {
-                setLoading(false);
-                setImageUrl(url);
-            });
-        }
-    };
-
-    const uploadButton = (
-        <div>
-            {loading ? <LoadingOutlined /> : <PlusOutlined />}
-            <div style={{ marginTop: 8 }}>Upload</div>
-        </div>
-    );
+    const formRef = React.createRef<FormInstance>();
     const { Option } = Select;
+    // onGenderChange = (value: string) => {
+    //     switch (value) {
+    //         case 'male':
+    //             this.formRef.current!.setFieldsValue({ note: 'Hi, man!' });
+    //             return;
+    //         case 'female':
+    //             this.formRef.current!.setFieldsValue({ note: 'Hi, lady!' });
+    //             return;
+    //         case 'other':
+    //             this.formRef.current!.setFieldsValue({ note: 'Hi there!' });
+    //     }
+    // };
 
-    const [value, setValue] = useState(1);
+    // const onFinish = (values: any) => {
+    //     console.log(values);
+    // };
 
+    // const onReset = () => {
+    //     formRef.current!.resetFields();
+    // };
+
+    // const onFill = () => {
+    //     formRef.current!.setFieldsValue({
+    //         note: 'Hello world!',
+    //         gender: 'male',
+    //     });
+    // };
     const [form] = Form.useForm();
 
-    const onFinish = (values: any) => {
-        console.log('Success:', values);
+    const handleChange = () => {
+        form.setFieldsValue({ sights: [] });
     };
 
-    const onFinishFailed = (errorInfo: any) => {
-        console.log('Failed:', errorInfo);
-    };
 
 
     useEffect(() => {
@@ -72,47 +65,87 @@ const GroupModal = (
 
 
     return (
-
         <ModalStyled
             visible={modal?.visible}
             footer={false}
             width={900}
             centered
             onCancel={() => setModal({ visible: false })}>
-
-            <Row>
-                <Col span={20} offset={0} style={{ fontSize: '35px', fontWeight: 'bold' }}>Add Sick Leave</Col>
-            </Row>
-            <Row>
-                <Col span={24}><DividerStyled /></Col>
-            </Row>
-            <Row>
-                <Col span={1} offset={1}><UploadStyled
-                    name="avatar"
-                    listType="picture-card"
-                    className="avatar-uploader"
-                    showUploadList={false}
-                    action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-                    beforeUpload={beforeUpload}
-                    onChange={handleChange}
+            <Form ref={formRef} name="control-ref">
+                <Form.Item name="gender" label="Gender" rules={[{ required: true }]}>
+                    <Select
+                        placeholder="Select a option and change input text above"
+                        allowClear
+                    >
+                        <Option value="female">รถโดยสาร</Option>
+                        <Option value="other">รถส่วนตัว</Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) => prevValues.gender !== currentValues.gender}
                 >
-                    {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
-                </UploadStyled></Col>
+                    {({ getFieldValue }) =>
+                        getFieldValue('gender') === 'other' ? (
+                            <Form.Item
+                                name="customizeGender"
+                                label="Customize Gender"
+                                rules={[{ required: true }]}
+                            >
+                                <Input />
+                                <Input />
+                            </Form.Item>
+                        ) : getFieldValue('gender') === 'female' ? (<Form.List name="sights">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(field => (
+                                        <Space key={field.key} align="baseline">
+                                            <Form.Item
+                                                noStyle
+                                                shouldUpdate={(prevValues, curValues) =>
+                                                    prevValues.area !== curValues.area || prevValues.sights !== curValues.sights
+                                                }
+                                            >
+                                                {() => (
+                                                    <Form.Item
+                                                        {...field}
+                                                        label="Sight"
+                                                        name={[field.name, 'sight']}
+                                                        rules={[{ required: true, message: 'Missing sight' }]}
+                                                    >
+                                                        <Input />
+                                                    </Form.Item>
+                                                )}
+                                            </Form.Item>
+                                            <Form.Item
+                                                {...field}
+                                                label="Price"
+                                                name={[field.name, 'price']}
+                                                rules={[{ required: true, message: 'Missing price' }]}
+                                            >
+                                                <Input />
+                                            </Form.Item>
 
-                <Col span={10} offset={11} style={{ fontSize: '18px', fontWeight: 'bold', color: '#064595' }}>Start Data
-                    <DatePickerStyled />End Data<DatePickerStyled />Detail
-                    <Form.Item><Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} style={{ borderRadius: "28px", width: '100%', height: '60px', fontSize: '18px', background: '#FFF', borderColor: '#000' }} /></Form.Item></Col>
-            </Row>
-            <Row justify="center">
-                <Col span={4} offset={13}>
-                    <ButtonStyledd onClick={() => setModal({ visible: false })}
-                    style={{ background: '#BFBFBF' }}>Cancel</ButtonStyledd>
-                </Col>
-                <Col span={4} offset={1}>
-                    <ButtonStyledd style={{ background: '#F1BE44' }}>Submit</ButtonStyledd>
-                </Col>
-            </Row>
-        </ModalStyled>
+                                            <MinusCircleOutlined onClick={() => remove(field.name)} />
+                                        </Space>
+                                    ))}
+
+                                    <Form.Item>
+                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                            Add sights
+                                        </Button>
+                                    </Form.Item>
+                                </>
+                            )}
+                        </Form.List>) : null
+                    }
+                </Form.Item>
+                <Button type="primary" htmlType="submit">
+                    Submit
+                </Button>
+            </Form>
+
+        </ModalStyled >
     )
 
 }

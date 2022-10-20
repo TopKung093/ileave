@@ -1,63 +1,153 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import NavbarHead from '../Components/Layout/Navbar_Admin'
-import AddUserModal from '../Components/Modal/Request_Modal'
-import PrintLeave from '../Components/Modal/Print_Leave'
-import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch, Input } from 'antd';
+import RequestModal from '../Components/Modal/Request_Modal'
+import { Button, Form, Row, Col, Divider, DatePicker, Table, Switch, Input, notification, Typography } from 'antd';
 import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, PrinterOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/router';
+interface ILeave {
+    detail: string
+    status: string
+    dragDate: Date
+    uptoDate: Date
+    approver: string
+    user_id: string
+    ltype_id: string
+}
 
-const App: React.FC = () => {
-    const [modal, setModal] = useState({})
-    const [modalprint, setModalprint] = useState({})
-    const [status, setStatus] = useState()
-    const onChangeStatus = (checked: boolean) => {
-        console.log(`switch to ${checked}`);
-        // setStatus(checked)
-    };
-
-    const dataSourceleave = [
+interface IModalLeave {
+    header?: string
+    status?: string
+    visible?: boolean
+    value?: any
+}
+const Request: React.FC = () => {
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const [modal, setModal] = useState<IModalLeave>({
+        header: "",
+        status: "",
+        visible: false,
+        value: {},
+    })
+    const [leave, setLeave] = useState<ILeave[]>([])
+    const [leavetype, setLeaveType] = useState([
         {
-            No: '',
-            Employee_ID: '',
-            Firsh_Name: '',
-            Last_Name: '',
-            Detaile: '',
-            Status: false
+            ltype_id: "",
+            ltype_name: "",
         },
-        {
-            No: '',
-            Employee_ID: '',
-            Firsh_Name: '',
-            Last_Name: '',
-            Detaile: '',
-            Status: false
+    ])
+    const [filter, setFilter] = useState({
+        "where": {},
+        "query": "",
+        "limit": 10,
+        "skip": 0
+    })
+    const [ltypefilter, setLtypeFilter] = useState({
+        "where": {},
+        "query": "",
+        "limit": 10,
+        "skip": 0
+    })
+    const queryLeave = async (filter: any) => {
+        setLoading(true)
+        const result = await axios({
+            method: 'post',
+            url: `/api/leave/query`,
+            data: filter
+        }).catch((err) => {
+            if (err) {
+                if (err?.response?.data?.message?.status === 401) {
+                    notification["error"]({
+                        message: "Query ข้อมูลไม่สำเร็จ",
+                        description: "กรุณาเข้าสู่ระบบ",
+                    })
+                    Cookies.remove("user")
+                    router.push("/login")
+                }
+            }
+        })
+        if (result?.status === 200) {
+            setLeave(result?.data?.data)
+            setLoading(false)
+        } else {
+            setLeave([])
+            setLoading(false)
         }
+    }
+    useEffect(() => {
+        queryLeave(filter)
+    }, [filter, setFilter])
+    const QueryLeaveType = async (filter: any) => {
+        const result = await axios({
+            method: 'post',
+            url: `/api/leaveType/query`,
+            data: filter
+        }).catch((err) => {
+            if (err) {
+                if (err?.response?.data?.message?.status === 401) {
+                    notification["error"]({
+                        message: "Query ข้อมูลไม่สำเร็จ",
+                        description: "กรุณาเข้าสู่ระบบ",
+                    })
+                    Cookies.remove("user")
+                    router.push("/login")
+                }
+            }
+        })
+        if (result?.status === 200) {
+            let ltypeData: any[] = []
+            result?.data?.data.map((value: any) => {
+                ltypeData.push({
+                    ltype_id: value._id,
+                    ltype_name: value?.name
+                })
+            })
+            setLeaveType(ltypeData)
+        }
+    }
+    useEffect(() => {
+        QueryLeaveType(ltypefilter)
+    }, [ltypefilter, setLtypeFilter])
+    const onAddLeave = async (value: any) => {
+        const result = await axios({
+          method: "post",
+          url: `/api/leave/update`,
+          data: { ...value, id: modal?.value?._id },
+        }).catch((err) => {
+          if (err) {
+            // console.log(err)
+            if (err?.response?.data?.message?.status === 401) {
+              notification["error"]({
+                message: "Query ข้อมูลไม่สำเร็จ",
+                description: "กรุณาเข้าสู่ระบบ",
+              })
+              Cookies.remove("user")
+              router.push("/login")
+    
+            }
+          }
+        })
+        if (result?.status === 200) {
+          notification["success"]({
+            message: "Update sccess",
+          })
+          queryLeave(filter)
+        } 
+      }
 
-    ];
     const columnsleave: any = [
         {
-            title: 'วันที่',
-            dataIndex: 'data',
-            key: 'data',
-            align: 'center',
-            width:'10%',
-        },
-        {
-            title: 'เริ่มต้น',
-            dataIndex: 'Start_Data',
-            key: 'sdata',
+            title: 'เริ่มวันที่',
+            dataIndex: 'dragDate',
+            key: 'dragDate',
             align: 'center',
         },
         {
-            title: 'สิ้นสุด',
-            dataIndex: 'End_Data',
-            key: 'edata',
-            align: 'center',
-        },
-        {
-            title: 'ประเภทการลา',
-            dataIndex: 'ltype',
-            key: 'ltype',
+            title: 'ถึงวันที่',
+            dataIndex: 'uptoDate',
+            key: 'uptoDate',
             align: 'center',
         },
         {
@@ -67,69 +157,62 @@ const App: React.FC = () => {
             align: 'center',
         },
         {
-            title: 'จำนวนวันลา',
-            dataIndex: 'Number',
-            key: 'Number',
+            title: 'ประเภทการลา',
+            dataIndex: 'ltype_id',
+            key: 'ltype_id',
             align: 'center',
+            render: (_: any, record: any) => (
+                <>
+                    {leavetype?.map((value: any, index: number) => {
+                        if (value?.ltype_id === record?.ltype_id) {
+                            return <Typography key={index}>{value?.ltype_name}</Typography>
+                        }
+                    })}
+                </>
+            ),
         },
         {
             title: 'สถานะ',
             dataIndex: 'status',
             key: 'status',
             align: 'center',
-
         },
         {
             title: 'การจัดการ',
             dataIndex: 'management',
             key: 'management',
             align: 'center',
-            width: "20%",
+            width: '20%',
             render: (_: any, record: any) => (
                 <Row justify='center' gutter={0} style={{ width: "100%" }}>
                     <Col span={6} style={{ marginRight: "20px" }}>
-                        <Button onClick={() => setModal({visible: true, header: "ไม่อนุมัติการลา", status: "unsubmitleave"})}
+                        <Button 
+                        onClick={() => { 
+                            let newModal:any = {...modal,header: "ไม่อนุมัตการ Work from home", status: "unsubmitwork", visible: true ,value: record}
+                            setModal(newModal)}
+                        }
                         style={{ background: 'none', border: 'none' }}>
                             <CloseCircleOutlined
                                 style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: '#FE0000', }} />
-
                         </Button>
                     </Col>
                     <Col span={4} style={{ marginRight: "40px", }}>
-                        <Button onClick={() => setModal({visible: true, header: "อนุมัติการลา", status: "submitleave"})}
+                        <Button 
+                        onClick={() => { 
+                            let newModal:any = {...modal,header: "อนุมัตการ Work from home", status: "submitwork", visible: true ,value: record}
+                            setModal(newModal)}
+                        }
                         style={{ background: 'none', border: 'none' }} >
                             <CheckCircleOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#36FE00" }} />
                         </Button>
                     </Col>
-                    <Col span={2} offset={0} style={{ marginRight: "40px", }}>
-                        <Button
-                            onClick={() => setModalprint({ visible: true, header: "ใบลากิจ", status: "Leave" }
-                            )}
-                            style={{ background: 'none', border: 'none' }} >
-                            <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
-                        </Button>
-                    </Col>
                 </Row>
-            )
-        }
-    ];
-    const dataSourcework = [
-        {
-            No: '1',
-            Start_Data: '06/06/6666',
-            Detail: '9VS8',
-            SaveWork: '',
-            status: 'ไม่อนุมัติ'
+            ),
         },
-        {
-            No: '2',
-            Start_Data: '00/00/0000',
-            Detail: 'PumiPol Sniper',
-            SaveWork: '',
-            status: 'อนุมัติ',
-        }
-
     ];
+    
+
+    //Wprk from home.
     const columnswork: any = [
         {
             title: 'ลำดับ',
@@ -186,34 +269,13 @@ const App: React.FC = () => {
                             <CheckCircleOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#36FE00" }} />
                         </Button>
                     </Col>
-                    <Col span={2} offset={0} style={{ marginRight: "40px", }}>
-                        <Button
-                            onClick={() => setModalprint({ visible: true, header: "ใบลากิจ", status: "Leave" })}
-                            style={{ background: 'none', border: 'none' }} >
-                            <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
-                        </Button>
-                    </Col>
                 </Row>
             ),
         },
     ];
-    const dataSourcerequest = [
-        {
-            No: '',
-            Start_Data: '',
-            End_Data: '',
-            Detail: '',
-            status: false
-        },
-        {
-            No: '',
-            Start_Data: '',
-            End_Data: '',
-            Detail: '',
-            status: false
-        }
+    
 
-    ];
+    // Out of offsite.
     const columnsrequest: any = [
         {
             title: 'สถานที่',
@@ -285,21 +347,12 @@ const App: React.FC = () => {
                             <CheckCircleOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#36FE00" }} />
                         </Button>
                     </Col>
-                    <Col span={2} offset={0} style={{ marginRight: "40px", }}>
-                        <Button
-                            onClick={() => setModalprint({ visible: true, header: "ใบลากิจ", status: "Leave" }
-                            )}
-                            style={{ background: 'none', border: 'none' }} >
-                            <PrinterOutlined style={{ fontSize: "24px", fontFamily: "SukhumvitSet-Bold", color: "#064595" }} />
-                        </Button>
-                    </Col>
                 </Row>
             ),
         },
     ];
     return (
         <>
-            <NavbarHead />
             <Row>
                 <Col span={20} offset={2}><p style={{ fontSize: '60px', fontWeight: 'bold', paddingTop: '20px', paddingBottom: '-10px' }}>คำขอรออนุมัติ</p></Col>
             </Row>
@@ -314,23 +367,22 @@ const App: React.FC = () => {
             <Row justify='center' style={{ marginTop: "10px" }}>
                 <Col span={18} offset={0}>
                 <p style={{ marginBottom: '0px',fontSize: '33px', fontWeight: 'bold', color: '#064595', paddingTop: '10px' }}> การลา</p>
-                <TableStyled style={{ width: "100%" }} dataSource={dataSourceleave} columns={columnsleave} />
+                <TableStyled pagination={false} style={{ width: "100%" }} dataSource={leave} columns={columnsleave} />
                 </Col>
             </Row>
             <Row justify='center' style={{ marginTop: "10px" }}>
                 <Col span={18} offset={0}>
                 <p style={{ marginBottom: '0px',fontSize: '33px', fontWeight: 'bold', color: '#064595', paddingTop: '10px' }}> Work From Home</p>
-                <TableStyled style={{ width: "100%" }} dataSource={dataSourcework} columns={columnswork} />
+                <TableStyled pagination={false} style={{ width: "100%" }} columns={columnswork} />
                 </Col>
             </Row>
             <Row justify='center' style={{ marginTop: "10px" }}>
                 <Col span={18} offset={0}>
                 <p style={{ marginBottom: '0px',fontSize: '33px', fontWeight: 'bold', color: '#064595', paddingTop: '10px' }}> ขออนุญาตออกนอกสถานที่</p>
-                <TableStyled style={{ width: "100%" }} dataSource={dataSourcerequest} columns={columnsrequest} />
+                <TableStyled pagination={false} style={{ width: "100%" ,marginBottom:'100px'}} columns={columnsrequest} />
                 </Col>
             </Row>
-            { AddUserModal(modal, setModal) }
-    { PrintLeave(modalprint, setModalprint) }
+            { RequestModal(modal, setModal,onAddLeave) }
         </>
     );
 };
@@ -400,4 +452,4 @@ const TableStyled = styled(Table)`
         border-right: none;
     }
 `
-export default App;
+export default Request;

@@ -1,169 +1,214 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Row, Col, Form, Select, Button, Divider, Table, DatePicker } from 'antd'
+import { Modal, Row, Col, Form, Select, Button, Divider, Table, DatePicker, Typography, notification } from 'antd'
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import styled from 'styled-components';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+import { useRouter } from 'next/router';
+const { Title } = Typography;
+interface ILeave {
+    detail: string
+    status: string
+    dragDate: Date
+    uptoDate: Date
+    number: Number
+    approver: string
+    user_id: string
+    ltype_id: String
+    createdAt:Date
+}
 
-
-const { RangePicker } = DatePicker;
-const GroupModal = (
+const PrintModal = (
     modalprint: any,
     setModalprint: any) => {
-
-    const { Option } = Select;
-
-    const [value, setValue] = useState(1);
-
+    console.log('modalprint=========>',modalprint)
     const [form] = Form.useForm();
-
-    const onFinish = (values: any) => {
-        console.log('Success:', values);
-    };
-
-    const onFinishFailed = (errorInfo: any) => {
-        console.log('Failed:', errorInfo);
-    };
-
-
-    useEffect(() => {
-        form.setFieldsValue({
-            groupname: modalprint?.value?.group, //form.item > name="name"
-            status: 1, //form.item > name="status"
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const [leave, setLeave] = useState<ILeave[]>([])
+    const [leavetype, setLeaveType] = useState([
+        {
+            ltype_id: "",
+            ltype_name: "",
+        },
+    ])
+    const [ltypefilter, setLtypeFilter] = useState({
+        "where": {},
+        "query": "",
+        "limit": 10,
+        "skip": 0
+    })
+    const [filter, setFilter] = useState({
+        "where": {},
+        "query": "",
+        "limit": 10,
+        "skip": 0
+    })
+    const QueryLeaveType = async (filter: any) => {
+        const result = await axios({
+            method: 'post',
+            url: `/api/leaveType/query`,
+            data: filter
+        }).catch((err) => {
+            if (err) {
+                if (err?.response?.data?.message?.status === 401) {
+                    notification["error"]({
+                        message: "Query ข้อมูลไม่สำเร็จ",
+                        description: "กรุณาเข้าสู่ระบบ",
+                    })
+                    Cookies.remove("user")
+                    router.push("/login")
+                }
+            }
         })
-    }, [modalprint, setModalprint])
-    const dataSource = [
-        {
-            No: '',
-            Date: '',
-            Detail: '',
-            Date_Start: '',
-            Date_End: '',
-        },
-        {
-            No: '',
-            Date: '',
-            Detail: '',
-            Date_Start: '',
-            Date_End: '',
-        },
-    ]
+        if (result?.status === 200) {
+            let ltypeData: any[] = []
+            result?.data?.data.map((value: any) => {
+                ltypeData.push({
+                    ltype_id: value._id,
+                    ltype_name: value?.name
+                })
+            })
+            setLeaveType(ltypeData)
+        }
+    }
+    useEffect(() => {
+        QueryLeaveType(ltypefilter)
+    }, [ltypefilter, setLtypeFilter])
+    const queryLeave = async (filter: any) => {
+        setLoading(true)
+        const result = await axios({
+            method: 'post',
+            url: `/api/leave/query`,
+            data: filter
+        }).catch((err) => {
+            if (err) {
+                if (err?.response?.data?.message?.status === 401) {
+                    notification["error"]({
+                        message: "Query ข้อมูลไม่สำเร็จ",
+                        description: "กรุณาเข้าสู่ระบบ",
+                    })
+                    Cookies.remove("user")
+                    router.push("/login")
+                }
+            }
+        })
+        if (result?.status === 200) {
+            setLeave(result?.data?.data)
+            setLoading(false)
+        } else {
+            setLeave([])
+            setLoading(false)
+        }
+    }
+    useEffect(() => {
+        queryLeave(filter)
+    }, [filter, setFilter])
     const columns: any = [
         {
-            title: 'ลำดับ',
-            dataIndex: 'No',
-            key: 'No',
+            title: 'วันที่เขียนใบลา',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
             align: 'center',
         },
         {
-            title: 'ว/ด/ป',
-            dataIndex: 'Date',
-            key: 'Date',
+            title: 'สาเหตุการลา',
+            dataIndex: 'detail',
+            key: 'detail',
             align: 'center',
         },
         {
-            title: 'รายละเอียด',
-            dataIndex: 'Detaile',
-            key: 'Detaile',
+            title: 'ลากจากวันที่',
+            dataIndex: 'dragDate',
+            key: 'dragDate',
             align: 'center',
         },
         {
-            title: 'วันที่เริ่มลา',
-            dataIndex: 'Date_Start',
-            key: 'Date_Start',
+            title: 'ถึงวันที่',
+            dataIndex: 'uptoDate',
+            key: 'uptoDate',
             align: 'center',
         },
         {
-            title: 'สิ้นสุดการลา',
-            dataIndex: 'Date_End',
-            key: 'Date_End',
+            title: 'จำนวนวันลา',
+            dataIndex: 'number',
+            key: 'number',
+            align: 'center',
+        },
+        {
+            title: 'วันลาที่เหลือ',
+            dataIndex: 'Total_Leave',
+            key: 'Total_Leave',
+            align: 'center',
+        },
+        {
+            title: 'ลายเซ็นผู้ลา',
+            dataIndex: 'user',
+            key: 'user',
+            align: 'center',
+        },
+        {
+            title: 'ลายเซ็นหัวหน้า',
+            dataIndex: 'Sig_Leader',
+            key: 'Sig_Leader',
+            align: 'center',
+        },
+        {
+            title: 'ผู้อนุมัติ',
+            dataIndex: 'USubmit',
+            key: 'USubmit',
             align: 'center',
         },
     ]
-    // const printDocument = () => {
-    //     const input: any = document.getElementById('ToPrint');
-    //     html2canvas(input)
-    //         .then((canvas) => {
-    //             let imgWidth = 208;
-    //             let imgHeight = canvas.height * imgWidth / canvas.width;
-    //             const imgData = canvas.toDataURL('img/png');
-    //             const pdf = new jsPDF('p', 'mm', 'a4');
-    //             pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    //             // pdf.output('dataurlnewwindow');
-    //             pdf.save("download.pdf");
-    //         })
-    //         ;
-    // }
-
     return (
-        <div id="ToPrint">
-            
-        <Row>
-        <ModalStyled
-            visible={modalprint?.visible}
-            footer={false}
-            width={1200}
-            onCancel={() => setModalprint({ visible: false })}>
-                <Row justify="center" >
-                    <Col span={20} offset={15}><img src="../images/logogo.png" width='25%' /></Col>
-                    <Col span={20} style={{ fontSize: '22px', color: '#000', textAlign: 'center', marginTop: '20px', fontFamily: 'THSarabun Italic' }}>{modalprint?.header}</Col>
-                    <Col span={22} style={{ paddingTop: '20px' }}><DividerStyled /></Col>
-                </Row>
-                <Row justify="center" >
-                    {modalprint?.status === "Leave" ?
-                        <>
+        <>
+            <Row>
+                <ModalStyled
+                    visible={modalprint?.visible}
+                    footer={false}
+                    width={1200}
 
-                            <ColStyledFont span={21} style={{ textAlign: 'right' }} >เขียนที่...................................................</ColStyledFont>
-                            <ColStyledFont span={21} style={{ textAlign: 'right', fontFamily: "THSarabun" }}>วันที่...........เดือน.................พ.ศ................</ColStyledFont>
-                            <ColStyledFont span={21} >เรื่อง..................................................................................</ColStyledFont>
-                            <ColStyledFont span={21} >ขาพเจ้า..................................................................................ตำแหน่ง..................................................................</ColStyledFont>
-                            <ColStyledFont span={21} >ขอนุญาตลากิจ  เนื่องจาก....................................................................................................................................................</ColStyledFont>
-                            <ColStyledFont span={21} >ตั้งแต่วันที่...................เดือน.............................พ.ศ..................จนถึงวันที่.........................เดือน....................................</ColStyledFont>
-                            <ColStyledFont span={21} >พ.ศ.........................ในระหว่างลากิจสามารถติดต่อข้าพเจ้าได้ที่.......................................................................................................</ColStyledFont>
-                            <ColStyledFont span={21} style={{ textAlign: 'center', paddingTop: '20px' }}>ขอแสดงความนับถือ</ColStyledFont>
-
-
-                        </>
-                        : modalprint?.status === "Sick-Leave" ?
+                    onCancel={() => setModalprint({ visible: false })}>
+                    <Row justify="center" >
+                        <Col span={20} offset={11}><img src="../images/1.png" width='50%' /></Col>
+                        <Col span={20} offset={1}><Title style={{ textAlign: 'center' }}>บริษัท ไอแอพพ์เทคโนโลยี จำกัด</Title></Col>
+                    </Row>
+                    <Row justify="center" >
+                        {modalprint?.status === "Leave" ?
                             <>
-                                <ColStyledFont span={21} style={{ textAlign: 'right' }}>เขียนที่...................................................</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'right', fontFamily: "THSarabun" }}>วันที่...........เดือน.................พ.ศ................</ColStyledFont>
-                                <ColStyledFont span={21} >เรื่อง..................................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >ขาพเจ้า..................................................................................ตำแหน่ง..................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >ขอนุญาตลากิจ  เนื่องจาก....................................................................................................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >ตั้งแต่วันที่...................เดือน.............................พ.ศ..................จนถึงวันที่.........................เดือน....................................</ColStyledFont>
-                                <ColStyledFont span={21} >พ.ศ....................................ในระหว่างลาป่วยนี้ได้รักษาตัวอยู่ที่  บ้านเลขที่...........................ถนน.....................................</ColStyledFont>
-                                <ColStyledFont span={21} >ตำบล............................................อำเภอ...............................................จังหวัด.........................................................</ColStyledFont>
-                                <ColStyledFont span={21} >ขาพเจ้า  ได้ลาป่วยอยู่เดิมแล้วในคลาวเดียวกันนี้...............................ครั้ง  รวม.............................วัน</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'center', paddingTop: '20px' }}>ควรมีแล้วแต่จะกรุณา</ColStyledFont>
+                                <Col span={20} offset={18}><Title level={2} style={{ fontWeight: '100', paddingTop: '30px' }}>ใบลาประจำปี 2565</Title></Col>
+                                <ColStyledFont span={21}>{modalprint?.data?.status}, ชื่อ - สกุล ............................................................................ ตำแหน่ง .............................ระดับ.............................</ColStyledFont>
+                                <ColStyledFont span={21} style={{ textAlign: 'center', border: '1px solid #000' }}>ลาป่วย-หักเงินตามวันที่ลา(กรณีเข้าสายโดยไม่มีเหตุอันควร/ไม่ได้รับการอนุมัติจากบริษัท 3 ครั้งนับเป็นขาดงาน 1 ครั้ง)</ColStyledFont>
+                                <ColStyledFont span={21}><TableStyled style={{ width: "100%" }} dataSource={leave} columns={columns} /></ColStyledFont>
+                            
+                                <ColStyledFont span={21} style={{ textAlign: 'center',border:'1px solid #000'}}>ลากิจ-หักเงินตามวันที่ลา(กรณีเข้าสายโดยไม่มีเหตุอันควร/ไม่ได้รับการอนุมัติจากบริษัท 3 ครั้งนับเป็นขาดงาน 1 ครั้ง)</ColStyledFont>
+                                <ColStyledFont span={21}><TableStyled style={{ width: "100%" }} columns={columns} /></ColStyledFont>
                             </>
-                            :
-                            <>
-                                <ColStyledFont span={21} >เรียน  ผู้อำนวยการฝ่ายบุคคล</ColStyledFont>
-                                <ColStyledFont span={21} >ขาพเจ้า..................................................................................ตำแหน่ง..................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >แผนก................................................ขอนุญาตปฎิบัติงานนอกสถานที่..........................................................</ColStyledFont>
-                                <ColStyledFont span={21} >รายละเอียด.................................................................................................................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >...........................................................................................................................................................................</ColStyledFont>
-                                <ColStyledFont span={21} >ในวันที่...........................................................เวลา.....................................................................................น.</ColStyledFont>
-                                <ColStyledFont span={21} >ระยะทางในการเดินทาง(ขาไป).................................ระยะทางในการเดินทาง(ขากลับ)..............................</ColStyledFont>
-                                <ColStyledFont span={21} >งบประมาณในการเดินทาง....................................................................บาท</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'right', paddingTop: '100px' }}>(ลงชื่อหัวหน้าแผนก)</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'right' }}>.........................................</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'right' }}>(.........................................)</ColStyledFont>
-                                <ColStyledFont span={21} style={{ textAlign: 'right' }}>........./....................../..........</ColStyledFont>
-                            </>
-                    }
-                    <ColStyledFont span={21} style={{ textAlign: 'center', paddingTop: '100px', paddingBottom: '50px' }}>(ลงชื่อ)............................................................</ColStyledFont>
-                </Row>
-                <Row justify="center">
-                    
-                    <ColStyledFont span={21} style={{ paddingTop: '20px', fontSize: '22px' }}>สถิติการลากิจประจำปี</ColStyledFont>
-                    <Col span={21}><TableStyled style={{ fontFamily: "THSarabun", paddingBottom: '50px' }} dataSource={dataSource} columns={columns} /></Col>
-                </Row>
-            
-        </ModalStyled>
-        </Row>
+                            : modalprint?.status === "Request-to-offsite" ?
+                                <>
+                                    <Col span={20} offset={16}><Title level={2} style={{ fontWeight: '100', paddingTop: '30px' }}>เอกสารปฏิบัติงานนอกสถานที่</Title></Col>
+                                    <Col span={22} style={{ paddingTop: '20px' }}><DividerStyled /></Col>
+                                    <ColStyledFont span={21} offset={1}>เรียน  ผู้อำนวยการฝ่ายบุคคล</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>ขาพเจ้า..............................................................................................ตำแหน่ง............................................................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>แผนก.......................................................ขอนุญาตปฎิบัติงานนอกสถานที่............................................................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>รายละเอียด.............................................................................................................................................................................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>.................................................................................................................................................................................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>ในวันที่..........................................................................เวลา.....................................................................................น.</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>ระยะทางในการเดินทาง(ขาไป)...........................................ระยะทางในการเดินทาง(ขากลับ).........................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1}>งบประมาณในการเดินทาง....................................................................บาท</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1} style={{ textAlign: 'right', paddingTop: '100px', paddingRight: '20px' }}>(ลงชื่อหัวหน้าแผนก)</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1} style={{ textAlign: 'right' }}>.........................................</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1} style={{ textAlign: 'right' }}>(.........................................)</ColStyledFont>
+                                    <ColStyledFont span={21} offset={1} style={{ textAlign: 'right' }}>........./....................../..........</ColStyledFont>
+                                </>
+                                : null
+                        }
+                    </Row>
+                </ModalStyled>
+            </Row>
 
-        </div>
+        </>
     )
 }
 
@@ -177,7 +222,7 @@ const TableStyled = styled(Table)`
     .ant-table-tbody>tr>td {
         transition: background 0.3s;
         background: #DEE7F1;
-        border-bottom: 2px solid white;
+        border-bottom: 1px solid white;
         font-size: 18px;
     }
     .ant-table-tbody>tr: last-child >td {
@@ -187,15 +232,15 @@ const TableStyled = styled(Table)`
         position: relative;
         color: #000;
         background: #fff !important;
-        font-size: 18px;
-        border: 1px solid #000;
+        font-size: 22px;
+        border: 0.5px solid #000;
     }
     .ant-table-tbody>tr>td {
         /* border-bottom: 1px solid #000; */
         transition: background 0.3s;
         background: #fff;
-        border: 1px solid #000;
-        font-size: 18px;
+        border: 0.5px solid #000;
+        font-size: 20px;
 
     }
     .ant-table-tbody>tr: last-child >td {
@@ -204,7 +249,7 @@ const TableStyled = styled(Table)`
     }
     .ant-table-tbody>tr >td : last-child{
         border-right: none;
-        border: 1px solid #000;
+        border: 0.5px solid #000;
     }
     .ant-table-pagination {
         display: none;
@@ -213,11 +258,12 @@ const TableStyled = styled(Table)`
     }
 `
 const ColStyledFont = styled(Col)`
-    font-Size: 18px;
+    font-Size: 26px;
     color: #000;
     text-Align:left;
     margin-Top:20px;
-    font-family:THSarabun ;
+    margin-bottom: -20px;
+
 `
 
 const ButtonStyledd = styled(Button)`
@@ -251,4 +297,4 @@ const ModalStyled = styled(Modal)`
     }
 `
 
-export default GroupModal
+export default PrintModal

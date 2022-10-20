@@ -2,23 +2,39 @@ import React, { useEffect, useState } from 'react'
 import { Modal, Row, Col, Form, Input, Select, Button, Divider, message, Upload, DatePicker, Typography } from 'antd'
 import styled from 'styled-components'
 const { Title } = Typography;
-
-const { RangePicker } = DatePicker;
-const GroupModal = (
-
-    modal: any, setModal: any) => {
+interface IFormValue {
+    detail: string
+    status: string
+    dragDate: Date
+    uptoDate: Date
+    approver: string
+    user_id: string
+    ltype_id: string
+    id?: string
+    delete?: string
+}
+const RequestModal = (modal: any, setModal: any,onAddLeave: any) => {
     const { Option } = Select;
     const [form] = Form.useForm();
-    const onFinish = (values: any) => {
-        console.log('Success:', values);
-    };
+    const onFinish = (values: IFormValue) => {
+        form.resetFields()
+        onAddLeave(values)
+        setModal({ value: values, visible: false })
+    }
     useEffect(() => {
-        form.setFieldsValue({
-            groupname: modal?.value?.group, //form.item > name="name"
-            status: 1, //form.item > name="status"
+        if(modal?.status === "submitwork"){
+            form.setFieldsValue({
+            status: "อนุมัติ"
         })
-    }, [modal, setModal])
+        }else if(modal?.status === "unsubmitwork"){
+            form.setFieldsValue({
+                status: "ไม่อนุมัติ"
+            })
+        }
+        
+        console.log('status===>', modal?.value?.status);
 
+    }, [modal, setModal])
     return (
         <>
             <ModalStyled
@@ -31,7 +47,7 @@ const GroupModal = (
                 <Col span={20} offset={0}
                     style={{ fontSize: '35px', fontWeight: 'bold' }}>{modal?.header}</Col>
                 <Col span={24}><DividerStyled /></Col>
-                <Formstyle
+                <Form
                     name="basic"
                     layout='vertical'
                     form={form}
@@ -39,16 +55,18 @@ const GroupModal = (
                     {modal?.status === "submitwork" ?
                         <>
                             <Row>
-                                <Form.Item style={{ width: '100%' }}>
-                                    <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัตการ Work from home หรือไม่ ?</Title>
+                                <Form.Item style={{ width: '100%' }} name="status">
+                                    <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัติการ Work from home ใช่หรือไม่ ?</Title>
+                                    <Input disabled hidden={true}/>
                                 </Form.Item>
                             </Row>
                         </>
                         : modal?.status === "unsubmitwork" ?
                             <>
                                 <Row>
-                                    <Form.Item style={{ width: '100%' }}>
-                                        <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัตการ Work from home หรือไม่ ?</Title>
+                                    <Form.Item style={{ width: '100%' }} name="status">
+                                        <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัติการ Work from home ใช่หรือไม่ ?</Title>
+                                        <Input disabled hidden={true}/>
                                     </Form.Item>
                                 </Row>
                             </>
@@ -56,7 +74,7 @@ const GroupModal = (
                                 <>
                                     <Row>
                                         <Form.Item style={{ width: '100%' }}>
-                                            <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัตการลาหรือไม่ ?</Title>
+                                            <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัตการลาใช่หรือไม่ ?</Title>
                                         </Form.Item>
                                     </Row>
                                 </>
@@ -64,7 +82,7 @@ const GroupModal = (
                                     <>
                                         <Row>
                                             <Form.Item style={{ width: '100%' }}>
-                                                <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัตการลาหรือไม่ ?</Title>
+                                                <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัตการลาใช่หรือไม่ ?</Title>
                                             </Form.Item>
                                         </Row>
                                     </>
@@ -72,7 +90,7 @@ const GroupModal = (
                                         <>
                                             <Row>
                                                 <Form.Item style={{ width: '100%' }}>
-                                                    <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัตการออกนอกสถานที่หรือไม่ ?</Title>
+                                                    <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณต้องการอนุมัติการออกนอกสถานที่ใช่หรือไม่ ?</Title>
                                                 </Form.Item>
                                             </Row>
                                         </>
@@ -80,7 +98,7 @@ const GroupModal = (
                                             <>
                                                 <Row>
                                                     <Form.Item style={{ width: '100%' }}>
-                                                        <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัตการออกนอกสถานที่หรือไม่ ?</Title>
+                                                        <Title style={{ textAlign: 'center', paddingTop: '50px', paddingBottom: '30px' }}>คุณไม่ต้องการอนุมัติการออกนอกสถานที่ใช่หรือไม่ ?</Title>
                                                     </Form.Item>
                                                 </Row>
                                             </>
@@ -88,15 +106,18 @@ const GroupModal = (
                     }
                     <Row justify="center">
                         <Col span={4} offset={12}>
-                            <ButtonStyledd onClick={() => setModal({ visible: false })}
+                            <ButtonStyledd onClick={() => {
+                                form.resetFields()
+                                setModal({ visible: false })
+                            }}
                                 style={{ background: '#F1BE44', fontSize: '22px' }}>ยกเลิก</ButtonStyledd>
                         </Col>
                         <Col span={4} offset={1}>
-                            <ButtonStyledd onClick={() => setModal({ visible: false })}
+                            <ButtonStyledd htmlType="submit"
                                 style={{ background: '#F1BE44', fontSize: '22px' }}>ยืนยัน</ButtonStyledd>
                         </Col>
                     </Row>
-                </Formstyle>
+                </Form>
 
             </ModalStyled>
         </>
@@ -186,4 +207,4 @@ const UploadStyled = styled(Upload)`
     transition: border-color 0.3s;
 }
 `
-export default GroupModal
+export default RequestModal
